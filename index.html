@@ -9,7 +9,9 @@
 		function openRoom() {
 			const input = document.getElementById("room-name-input");
 			const path = encodeURI(input.value);
-			window.location.pathname = path;
+			setTimeout(function () {
+				window.location.pathname = path;
+			}, 0.0);
 		}
 	</script>
 </head>
