@@ -49,8 +49,6 @@ const api = {
 				audio: false
 			});
 		} catch { }
-
-		console.log("start!");
 	},
 	onConnected: function (local_user_id) {
 		state.local_user_id = local_user_id;
@@ -86,13 +84,14 @@ const api = {
 		connection.video.remove();
 	},
 	onIceCandidate: async function (isOut, candidate, user_id) {
-		getConnection(user_id, isOut).addIceCandidate(candidate);
+		getConnection(user_id, !isOut).addIceCandidate(candidate);
 	},
 	onDescription: async function (isOut, desc, user_id) {
+		isOut = !isOut;
 		const c = getConnection(user_id, isOut);
 		if (desc.type === "offer") {
 			await c.setRemoteDescription(desc);
-			if (state.stream != null) {
+			if (state.stream != null && isOut) {
 				state.stream.getTracks().forEach((track) => c.addTrack(track, state.stream));
 			}
 			await c.setLocalDescription(await c.createAnswer());
