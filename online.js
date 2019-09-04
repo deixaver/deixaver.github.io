@@ -5,7 +5,7 @@ const event_description = 2;
 
 client.onStateChange = function (state) {
 	if (client.isInLobby()) {
-		client.joinRoom(window.location.hash, { createIfNotExists: true }, {});
+		client.joinRoom(window.location.pathname, { createIfNotExists: true }, {});
 	}
 
 	if (state == Photon.LoadBalancing.LoadBalancingClient.State.Joined) {
@@ -50,10 +50,6 @@ client.onEvent = function (code, data, actor_nr) {
 }
 
 window.onload = async function () {
-	if (window.location.hash.length <= 1) {
-		return;
-	}
-
 	await api.start();
 
 	client.connectToRegionMaster("SA");
