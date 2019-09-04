@@ -5,7 +5,7 @@ const state = {
 	stream: null,
 }
 
-const videoElement = connection.video = document.getElementsByTagName("video")[0];
+const videoElement = document.getElementsByTagName("video")[0];
 
 function newConnection() {
 	//https://gist.github.com/sagivo/3a4b2f2c7ac6e1b5267c2f1f59ac6c6b
@@ -39,11 +39,11 @@ const api = {
 		} catch { }
 	},
 	onPeerJoined: function (user_id) {
-		const connection = newConnection(state.stream != null);
-		state.connections[user_id] = connection;
+		const pc = newConnection(state.stream != null);
+		state.connections[user_id] = pc;
 
 		if (state.stream != null) {
-			state.stream.getTracks().forEach((track) => connection.pc.addTrack(track, state.stream));
+			state.stream.getTracks().forEach((track) => pc.addTrack(track, state.stream));
 		}
 	},
 	onPeerLeft: function (user_id) {
