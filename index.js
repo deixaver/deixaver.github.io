@@ -36,6 +36,8 @@ const api = {
 				video: { cursor: "always" },
 				audio: false
 			});
+
+			videoElement.srcObject = state.stream;
 		} catch { }
 	},
 	onPeerJoined: function (user_id) {
