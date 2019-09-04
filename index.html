@@ -3,31 +3,20 @@
 
 <head>
 	<meta charset="utf-8">
-	<title>Screen Share</title>
-	<style>
-		html,
-		body {
-			width: 100%;
-			height: 100%;
-			margin: 0px;
-			border: 0px;
-			overflow: hidden;
-			display: block;
-			background-color: black;
-		}
-	</style>
-</head>
-
-<body oncontextmenu="return false;">
-	<form onsubmit="openRoom()">
-		<input id="room-name-input" type="text" placeholder="room_name" />
-	</form>
+	<title>Deixa Ver</title>
+	<link rel="stylesheet" type="text/css" href="style.css">
 	<script>
 		function openRoom() {
 			const input = document.getElementById("room-name-input");
 			window.location.href = encodeURI(input.value);
 		}
 	</script>
+</head>
+
+<body oncontextmenu="return false;">
+	<form onsubmit="openRoom()">
+		<input id="room-name-input" type="text" placeholder="room_name" />
+	</form>
 </body>
 
 </html>
