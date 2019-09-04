@@ -5,7 +5,29 @@ const state = {
 	stream: null,
 }
 
-const videosContainer = document.getElementById("videos");
+const videoElement = connection.video = document.getElementsByTagName("video")[0];
+
+function newConnection() {
+	//https://gist.github.com/sagivo/3a4b2f2c7ac6e1b5267c2f1f59ac6c6b
+	const pc = new RTCPeerConnection({
+		iceServers: [{ urls: "stun:stun.l.google.com:19302" }]
+	});
+
+	pc.onicecandidate = function (e) {
+		api.sendIceCandidate(e.candidate);
+	};
+	pc.onnegotiationneeded = async function () {
+		await pc.setLocalDescription(await pc.createOffer());
+		api.sendDescription(pc.localDescription);
+	};
+	pc.ontrack = function (e) {
+		if (videoElement.srcObject !== e.streams[0]) {
+			videoElement.srcObject = e.streams[0];
+		}
+	};
+
+	return pc;
+}
 
 const api = {
 	shareScreen: async function () {
@@ -25,19 +47,19 @@ const api = {
 		}
 	},
 	onPeerLeft: function (user_id) {
-		const connection = state.connections[user_id];
-		if (connection != null) {
-			deleteConnection(connection);
+		const pc = state.connections[user_id];
+		if (pc != null) {
+			pc.close();
 		}
 	},
 	onIceCandidate: async function (candidate, user_id) {
-		const pc = getConnection(user_id);
+		const pc = state.connections[user_id];
 		if (pc != null) {
 			pc.addIceCandidate(candidate);
 		}
 	},
 	onDescription: async function (desc, user_id) {
-		const pc = getConnection(user_id);
+		const pc = state.connections[user_id];
 		if (pc == null) {
 			return;
 		}
