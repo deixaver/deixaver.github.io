@@ -8,7 +8,8 @@
 	<script>
 		function openRoom() {
 			const input = document.getElementById("room-name-input");
-			window.location.pathname = encodeURI(input.value);
+			const path = encodeURI(input.value);
+			window.location.pathname = path;
 		}
 	</script>
 </head>
