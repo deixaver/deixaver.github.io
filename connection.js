@@ -2,8 +2,9 @@ const videosContainer = document.getElementById("videos");
 
 function newConnection(hasOut) {
 	const cIn = newOneWayConnection(false);
-	const cOut = hasOut ? newOneWayConnection(true) : null;
-
+	//const cOut = hasOut ? newOneWayConnection(true) : null;
+	const cOut = newOneWayConnection(true);
+	
 	const connection = { cIn: cIn, cOut: cOut, video: null };
 
 	connection.ontrack = function (e) {
@@ -47,5 +48,8 @@ function newOneWayConnection(isOut) {
 
 function getConnection(user_id, isOut) {
 	const c = state.connections[user_id];
+	if (c == null) {
+		return null;
+	}
 	return isOut ? c.cOut : c.cIn;
 }

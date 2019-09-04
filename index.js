@@ -24,10 +24,6 @@ const api = {
 		} catch { }
 	},
 	onPeerJoined: function (user_id) {
-		if (user_id === state.local_user_id) {
-			return;
-		}
-
 		const connection = newConnection(state.stream != null);
 		state.connections[user_id] = connection;
 
@@ -42,11 +38,18 @@ const api = {
 		}
 	},
 	onIceCandidate: async function (isOut, candidate, user_id) {
-		getConnection(user_id, !isOut).addIceCandidate(candidate);
+		const c = getConnection(user_id, !isOut);
+		if (c != null) {
+			c.addIceCandidate(candidate);
+		}
 	},
 	onDescription: async function (isOut, desc, user_id) {
 		isOut = !isOut;
 		const c = getConnection(user_id, isOut);
+		if (c == null) {
+			return;
+		}
+
 		if (desc.type === "offer") {
 			await c.setRemoteDescription(desc);
 			if (state.stream != null && isOut) {
