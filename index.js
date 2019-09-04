@@ -1,7 +1,6 @@
 const version = "0.1";
 
 const state = {
-	local_user_id: 0,
 	connections: {},
 	stream: null,
 }
@@ -15,32 +14,6 @@ const iceServers = [
 	// { urls: "stun:stun4.l.google.com: 19302" },
 ];
 
-const videosContainer = document.getElementById("videos");
-
-function newOneWayConnection(isOut, videoElement) {
-	const c = new RTCPeerConnection({ iceServers: iceServers });
-
-	c.onicecandidate = function (e) {
-		api.sendIceCandidate(isOut, e.candidate);
-	};
-	c.onnegotiationneeded = async function () {
-		await c.setLocalDescription(await c.createOffer());
-		api.sendDescription(isOut, c.localDescription);
-	};
-	c.ontrack = function (e) {
-		if (videoElement.srcObject !== e.streams[0]) {
-			videoElement.srcObject = e.streams[0];
-		}
-	};
-
-	return c;
-}
-
-function getConnection(user_id, isOut) {
-	const c = state.connections[user_id];
-	return isOut ? c.cOut : c.cIn;
-}
-
 const api = {
 	start: async function () {
 		try {
@@ -50,23 +23,12 @@ const api = {
 			});
 		} catch { }
 	},
-	onConnected: function (local_user_id) {
-		state.local_user_id = local_user_id;
-	},
 	onPeerJoined: function (user_id) {
 		if (user_id === state.local_user_id) {
 			return;
 		}
 
-		const videoElement = document.createElement("video");
-		videoElement.autoplay = true;
-		videosContainer.appendChild(videoElement);
-
-		const connection = {
-			cIn: newOneWayConnection(false, videoElement),
-			cOut: newOneWayConnection(true, videoElement),
-			video: videoElement,
-		};
+		const connection = newConnection(state.stream != null);
 		state.connections[user_id] = connection;
 
 		if (state.stream != null) {
@@ -74,14 +36,10 @@ const api = {
 		}
 	},
 	onPeerLeft: function (user_id) {
-		if (user_id === state.local_user_id) {
-			return;
-		}
-
 		const connection = state.connections[user_id];
-		connection.cIn.close();
-		connection.cOut.close();
-		connection.video.remove();
+		if (connection != null) {
+			deleteConnection(connection);
+		}
 	},
 	onIceCandidate: async function (isOut, candidate, user_id) {
 		getConnection(user_id, !isOut).addIceCandidate(candidate);

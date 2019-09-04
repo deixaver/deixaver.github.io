@@ -9,15 +9,20 @@ client.onStateChange = function (state) {
 	}
 
 	if (state == Photon.LoadBalancing.LoadBalancingClient.State.Joined) {
-		api.onConnected(client.myActor().actorNr);
+		const localActorId = client.myActor().actorNr;
 		for (let actor of client.actorsArray) {
-			api.onPeerJoined(actor.actorNr);
+			if (actor.actorNr != localActorId) {
+				api.onPeerJoined(actor.actorNr);
+			}
 		}
 	}
 }
 
 client.onActorJoin = function (actor) {
-	api.onPeerJoined(actor.actorNr);
+	const localActorId = client.myActor().actorNr;
+	if (actor.actorNr != localActorId) {
+		api.onPeerJoined(actor.actorNr);
+	}
 }
 
 client.onActorLeave = function (actor) {
@@ -28,20 +33,12 @@ client.onEvent = function (code, data, actor_nr) {
 	switch (code) {
 		case event_ice_candidate:
 			setTimeout(async function () {
-				await api.onIceCandidate(
-					data.isOut,
-					JSON.parse(data.candidate),
-					actor_nr
-				);
+				await api.onIceCandidate(data.isOut, JSON.parse(data.candidate), actor_nr);
 			}, 0.0);
 			break;
 		case event_description:
 			setTimeout(async function () {
-				await api.onDescription(
-					data.isOut,
-					JSON.parse(data.description),
-					actor_nr
-				);
+				await api.onDescription(data.isOut, JSON.parse(data.description), actor_nr);
 			}, 0.0);
 			break;
 		default:
