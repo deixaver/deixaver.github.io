@@ -36,8 +36,3 @@ input {
 	background-color: #1a2a3a;
 	color: inherit;
 }
-
-#videos {
-	display: flex;
-	flex-flow: column wrap;
-}
