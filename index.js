@@ -5,17 +5,10 @@ const state = {
 	stream: null,
 }
 
-//https://gist.github.com/sagivo/3a4b2f2c7ac6e1b5267c2f1f59ac6c6b
-const iceServers = [
-	{ urls: "stun:stun.l.google.com:19302" },
-	// { urls: "stun:stun1.l.google.com: 19302" },
-	// { urls: "stun:stun2.l.google.com: 19302" },
-	// { urls: "stun:stun3.l.google.com: 19302" },
-	// { urls: "stun:stun4.l.google.com: 19302" },
-];
+const videosContainer = document.getElementById("videos");
 
 const api = {
-	start: async function () {
+	shareScreen: async function () {
 		try {
 			state.stream = await navigator.mediaDevices.getDisplayMedia({
 				video: { cursor: "always" },
@@ -28,7 +21,7 @@ const api = {
 		state.connections[user_id] = connection;
 
 		if (state.stream != null) {
-			state.stream.getTracks().forEach((track) => connection.cOut.addTrack(track, state.stream));
+			state.stream.getTracks().forEach((track) => connection.pc.addTrack(track, state.stream));
 		}
 	},
 	onPeerLeft: function (user_id) {
@@ -37,28 +30,27 @@ const api = {
 			deleteConnection(connection);
 		}
 	},
-	onIceCandidate: async function (isOut, candidate, user_id) {
-		const c = getConnection(user_id, !isOut);
-		if (c != null) {
-			c.addIceCandidate(candidate);
+	onIceCandidate: async function (candidate, user_id) {
+		const pc = getConnection(user_id);
+		if (pc != null) {
+			pc.addIceCandidate(candidate);
 		}
 	},
-	onDescription: async function (isOut, desc, user_id) {
-		isOut = !isOut;
-		const c = getConnection(user_id, isOut);
-		if (c == null) {
+	onDescription: async function (desc, user_id) {
+		const pc = getConnection(user_id);
+		if (pc == null) {
 			return;
 		}
 
 		if (desc.type === "offer") {
-			await c.setRemoteDescription(desc);
-			if (state.stream != null && isOut) {
-				state.stream.getTracks().forEach((track) => c.addTrack(track, state.stream));
+			await pc.setRemoteDescription(desc);
+			if (state.stream != null) {
+				state.stream.getTracks().forEach((track) => pc.addTrack(track, state.stream));
 			}
-			await c.setLocalDescription(await c.createAnswer());
-			api.sendDescription(isOut, c.localDescription);
+			await pc.setLocalDescription(await pc.createAnswer());
+			api.sendDescription(pc.localDescription);
 		} else if (desc.type === "answer") {
-			await c.setRemoteDescription(desc);
+			await pc.setRemoteDescription(desc);
 		} else {
 			console.error("Unsupported SDP type.");
 		}

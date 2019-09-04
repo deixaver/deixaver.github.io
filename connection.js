@@ -1,13 +1,24 @@
-const videosContainer = document.getElementById("videos");
+//https://gist.github.com/sagivo/3a4b2f2c7ac6e1b5267c2f1f59ac6c6b
+const iceServers = [
+	{ urls: "stun:stun.l.google.com:19302" },
+	// { urls: "stun:stun1.l.google.com: 19302" },
+	// { urls: "stun:stun2.l.google.com: 19302" },
+	// { urls: "stun:stun3.l.google.com: 19302" },
+	// { urls: "stun:stun4.l.google.com: 19302" },
+];
 
-function newConnection(hasOut) {
-	const cIn = newOneWayConnection(false);
-	//const cOut = hasOut ? newOneWayConnection(true) : null;
-	const cOut = newOneWayConnection(true);
-	
-	const connection = { cIn: cIn, cOut: cOut, video: null };
+function newConnection() {
+	const pc = new RTCPeerConnection({ iceServers: iceServers });
+	const connection = { pc: pc, video: null };
 
-	connection.ontrack = function (e) {
+	pc.onicecandidate = function (e) {
+		api.sendIceCandidate(e.candidate);
+	};
+	pc.onnegotiationneeded = async function () {
+		await pc.setLocalDescription(await pc.createOffer());
+		api.sendDescription(pc.localDescription);
+	};
+	pc.ontrack = function (e) {
 		if (connection.video == null) {
 			connection.video = document.createElement("video");
 			connection.video.autoplay = true;
@@ -23,33 +34,13 @@ function newConnection(hasOut) {
 }
 
 function deleteConnection(connection) {
-	connection.cIn.close();
-	if (connection.cOut != null) {
-		connection.cOut.close();
-	}
+	connection.pc.close();
 	if (connection.video != null) {
 		connection.video.remove();
 	}
 }
 
-function newOneWayConnection(isOut) {
-	const c = new RTCPeerConnection({ iceServers: iceServers });
-
-	c.onicecandidate = function (e) {
-		api.sendIceCandidate(isOut, e.candidate);
-	};
-	c.onnegotiationneeded = async function () {
-		await c.setLocalDescription(await c.createOffer());
-		api.sendDescription(isOut, c.localDescription);
-	};
-
-	return c;
-}
-
-function getConnection(user_id, isOut) {
+function getConnection(user_id) {
 	const c = state.connections[user_id];
-	if (c == null) {
-		return null;
-	}
-	return isOut ? c.cOut : c.cIn;
+	return c != null ? c.pc : null;
 }
