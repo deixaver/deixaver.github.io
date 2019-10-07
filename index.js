@@ -32,10 +32,8 @@ const api = {
 		}
 	},
 	onPeerShareScreen: function (userId) {
-		console.log("SHARE SCEREN");
 		const c = state.connections[userId];
 		if (c != null) {
-			console.log("ADD CONNECTIN");
 			addInConnection(c);
 		}
 	},
@@ -63,7 +61,7 @@ const api = {
 		} else if (eventData.description.type === "answer") {
 			await pc.setRemoteDescription(eventData.description);
 		} else {
-			console.error("Unsupported SDP type.");
+			console.error("unsupported sdp type");
 		}
 	},
 

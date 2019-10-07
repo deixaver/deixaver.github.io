@@ -18,11 +18,12 @@ function createRtcConnection(isIn) {
 }
 
 function newConnection() {
-	return {
+	const c = {
 		pcIn: null,
 		pcOut: null,
 		screenVideo: null,
 	};
+	return c;
 }
 
 function addOutConnection(connection) {
@@ -32,7 +33,7 @@ function addOutConnection(connection) {
 function addInConnection(connection) {
 	connection.pcIn = createRtcConnection(true);
 	connection.pcIn.ontrack = function (e) {
-		if (connection.screenVideo !== null) {
+		if (connection.screenVideo === null) {
 			connection.screenVideo = document.createElement("video");
 			videoContainer.appendChild(connection.screenVideo);
 			connection.screenVideo.autoplay = true;
@@ -42,15 +43,15 @@ function addInConnection(connection) {
 }
 
 function destroyConnection(connection) {
-	if (connection.screenVideo !== null) {
+	if (connection.screenVideo != null) {
 		videoContainer.removeChild(connection.screenVideo);
 	}
 
-	if (connection.pcIn !== null) {
+	if (connection.pcIn != null) {
 		connection.pcIn.close();
 	}
 
-	if (connection.pcOut !== null) {
+	if (connection.pcOut != null) {
 		connection.pcOut.close();
 	}
 }
