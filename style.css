@@ -45,14 +45,6 @@ input {
 
 	display: grid;
 	grid-template-columns: auto;
-	/*
-	display: flex;
-	flex-direction: row;
-	flex-wrap: wrap;
-	justify-content: center;
-	align-items: center;
-	align-content: center;
-	*/
 }
 
 video {

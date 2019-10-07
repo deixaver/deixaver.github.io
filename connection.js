@@ -8,6 +8,13 @@ function newVideoElement(stream) {
 	return video;
 }
 
+function updateGridLayout() {
+	const count = videoContainer.childElementCount;
+	const columns = Math.min(Math.round(Math.sqrt(count)), 1);
+	console.log("NEW COLUMN COUNT", columns);
+	videoContainer.style = "grid-template-columns:" + "auto ".repeat(columns);
+}
+
 function createRtcConnection(targetUserId, isIn) {
 	//https://gist.github.com/sagivo/3a4b2f2c7ac6e1b5267c2f1f59ac6c6b
 	const pc = new RTCPeerConnection({
@@ -49,6 +56,7 @@ function addInConnection(connection) {
 		if (connection.screenVideo === null) {
 			console.log("ADD IN CONNECTION", connection.targetUserId, "stream count:", e.streams.length);
 			connection.screenVideo = newVideoElement(e.streams[0]);
+			updateGridLayout();
 		}
 	};
 }
@@ -56,6 +64,7 @@ function addInConnection(connection) {
 function deleteConnection(connection) {
 	if (connection.screenVideo != null) {
 		videoContainer.removeChild(connection.screenVideo);
+		updateGridLayout();
 	}
 
 	if (connection.pcIn != null) {
