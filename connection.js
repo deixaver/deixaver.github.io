@@ -43,7 +43,7 @@ function addInConnection(connection) {
 	};
 }
 
-function destroyConnection(connection) {
+function deleteConnection(connection) {
 	if (connection.screenVideo != null) {
 		videoContainer.removeChild(connection.screenVideo);
 	}

@@ -27,7 +27,7 @@ const api = {
 	onPeerLeft: function (userId) {
 		const c = state.connections[userId];
 		if (c != null) {
-			destroyConnection(c);
+			deleteConnection(c);
 		}
 	},
 	onPeerShareScreen: function (userId) {
