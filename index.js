@@ -5,30 +5,6 @@ const state = {
 	stream: null,
 }
 
-const videoElement = document.getElementsByTagName("video")[0];
-
-function newConnection() {
-	//https://gist.github.com/sagivo/3a4b2f2c7ac6e1b5267c2f1f59ac6c6b
-	const pc = new RTCPeerConnection({
-		iceServers: [{ urls: "stun:stun.l.google.com:19302" }]
-	});
-
-	pc.onicecandidate = function (e) {
-		api.sendIceCandidate(e.candidate);
-	};
-	pc.onnegotiationneeded = async function () {
-		await pc.setLocalDescription(await pc.createOffer());
-		api.sendDescription(pc.localDescription);
-	};
-	pc.ontrack = function (e) {
-		if (videoElement.srcObject !== e.streams[0]) {
-			videoElement.srcObject = e.streams[0];
-		}
-	};
-
-	return pc;
-}
-
 const api = {
 	shareScreen: async function () {
 		try {
@@ -36,45 +12,43 @@ const api = {
 				video: { cursor: "always" },
 				audio: false
 			});
-
-			videoElement.srcObject = state.stream;
 		} catch { }
 	},
 	onPeerJoined: function (user_id) {
-		const pc = newConnection(state.stream != null);
-		state.connections[user_id] = pc;
+		const c = newConnection(state.stream != null);
+		state.connections[user_id] = c;
 
 		if (state.stream != null) {
-			state.stream.getTracks().forEach((track) => pc.addTrack(track, state.stream));
+			state.stream.getTracks().forEach((track) => c.addTrack(track, state.stream));
 		}
 	},
 	onPeerLeft: function (user_id) {
-		const pc = state.connections[user_id];
-		if (pc != null) {
-			pc.close();
+		const c = state.connections[user_id];
+		if (c != null) {
+			destroyConnection(c);
 		}
 	},
 	onIceCandidate: async function (candidate, user_id) {
-		const pc = state.connections[user_id];
-		if (pc != null) {
-			pc.addIceCandidate(candidate);
+		const c = state.connections[user_id];
+		if (c != null) {
+			c.pcIn.addIceCandidate(candidate);
 		}
 	},
 	onDescription: async function (desc, user_id) {
-		const pc = state.connections[user_id];
-		if (pc == null) {
+		const c = state.connections[user_id];
+		if (c == null) {
 			return;
 		}
 
 		if (desc.type === "offer") {
-			await pc.setRemoteDescription(desc);
+			await c.pcOut.setRemoteDescription(desc);
 			if (state.stream != null) {
-				state.stream.getTracks().forEach((track) => pc.addTrack(track, state.stream));
+				state.stream.getTracks().forEach((track) => c.pcOut.addTrack(track, state.stream));
 			}
-			await pc.setLocalDescription(await pc.createAnswer());
-			api.sendDescription(pc.localDescription);
+			await c.pcOut.setLocalDescription(await c.pcOut.createAnswer());
+			api.sendDescription(c.pcOut.localDescription);
 		} else if (desc.type === "answer") {
-			await pc.setRemoteDescription(desc);
+			await c.pcIn.setRemoteDescription(desc);
 		} else {
 			console.error("Unsupported SDP type.");
 		}

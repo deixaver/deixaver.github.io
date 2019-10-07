@@ -3,17 +3,6 @@ const client = new Photon.LoadBalancing.LoadBalancingClient(Photon.ConnectionPro
 const event_ice_candidate = 1;
 const event_description = 2;
 
-function getMasterNr() {
-	let minActorNr = 99999;
-	for (let actor of client.actorsArray) {
-		if (actor.actorNr < minActorNr) {
-			minActorNr = actor.actorNr;
-		}
-	}
-
-	return minActorNr;
-}
-
 client.onStateChange = function (state) {
 	if (client.isInLobby()) {
 		client.joinRoom(window.location.pathname, { createIfNotExists: true }, {});
@@ -21,59 +10,39 @@ client.onStateChange = function (state) {
 
 	if (state == Photon.LoadBalancing.LoadBalancingClient.State.Joined) {
 		const localActorNr = client.myActor().actorNr;
-		const masterNr = getMasterNr();
-
-		if (localActorNr == masterNr) {
-			setTimeout(async function () {
-				await api.shareScreen();
-
-				for (let actor of client.actorsArray) {
-					if (actor.actorNr != localActorNr) {
-						api.onPeerJoined(actor.actorNr);
-					}
-				}
-			}, 0.0);
-		} else {
-			api.onPeerJoined(masterNr);
+		for (let actor of client.actorsArray) {
+			if (actor.actorNr != localActorNr) {
+				api.onPeerJoined(actor.actorNr);
+			}
 		}
 	}
 }
 
 client.onActorJoin = function (actor) {
 	const localActorNr = client.myActor().actorNr;
-	const isMaster = localActorNr == getMasterNr();
-	if (actor.actorNr != localActorNr && isMaster) {
+	if (actor.actorNr != localActorNr) {
 		api.onPeerJoined(actor.actorNr);
 	}
 }
 
 client.onActorLeave = function (actor) {
 	const localActorNr = client.myActor().actorNr;
-	const isMaster = localActorNr == getMasterNr();
-	if (actor.actorNr != localActorNr && isMaster) {
+	if (actor.actorNr != localActorNr) {
 		api.onPeerLeft(actor.actorNr);
 	}
 }
 
 client.onEvent = function (code, data, actor_nr) {
-	const masterNr = getMasterNr();
-	const toMaster = client.myActor().actorNr == masterNr;
-	const fromMaster = actor_nr == masterNr;
-
 	switch (code) {
 		case event_ice_candidate:
-			if (toMaster || fromMaster) {
-				setTimeout(async function () {
-					await api.onIceCandidate(JSON.parse(data), actor_nr);
-				}, 0.0);
-			}
+			setTimeout(async function () {
+				await api.onIceCandidate(JSON.parse(data), actor_nr);
+			}, 0.0);
 			break;
 		case event_description:
-			if (toMaster || fromMaster) {
-				setTimeout(async function () {
-					await api.onDescription(JSON.parse(data), actor_nr);
-				}, 0.0);
-			}
+			setTimeout(async function () {
+				await api.onDescription(JSON.parse(data), actor_nr);
+			}, 0.0);
 			break;
 		default:
 			break;
@@ -81,6 +50,8 @@ client.onEvent = function (code, data, actor_nr) {
 }
 
 window.onload = async function () {
+	await api.shareScreen();
+
 	client.connectToRegionMaster("SA");
 
 	api.sendIceCandidate = function (icec) {
