@@ -32,8 +32,10 @@ const api = {
 		}
 	},
 	onPeerShareScreen: function (userId) {
+		console.log("SHARE SCEREN");
 		const c = state.connections[userId];
 		if (c != null) {
+			console.log("ADD CONNECTIN");
 			addInConnection(c);
 		}
 	},
