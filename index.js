@@ -1,5 +1,7 @@
 const version = "0.1";
 
+const maxHeight = 720;
+
 const state = {
 	connections: {},
 	stream: null,
@@ -9,9 +11,22 @@ const api = {
 	shareScreen: async function () {
 		try {
 			state.stream = await navigator.mediaDevices.getDisplayMedia({
-				video: { cursor: "always" },
-				audio: false
+				audio: false,
+				video: {
+					cursor: "always",
+					width: maxHeight * 16.0 / 9.0,
+					height: maxHeight,
+					frameRate: 10,
+				},
 			});
+			// state.stream = await navigator.mediaDevices.getUserMedia({
+			// 	audio: false,
+			// 	video: {
+			// 		width: maxHeight * 16.0 / 9.0,
+			// 		height: maxHeight,
+			// 		frameRate: 10,
+			// 	},
+			// });
 			newVideoElement(state.stream);
 		} catch { }
 	},
