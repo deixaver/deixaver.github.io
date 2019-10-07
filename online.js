@@ -11,6 +11,7 @@ client.onStateChange = function (state) {
 
 	if (state == Photon.LoadBalancing.LoadBalancingClient.State.Joined) {
 		const localActorNr = client.myActor().actorNr;
+		console.log("HI!! IM ACTOR NR", localActorNr);
 		for (let actor of client.actorsArray) {
 			if (actor.actorNr != localActorNr) {
 				api.onPeerJoined(actor.actorNr);
@@ -36,6 +37,7 @@ client.onActorLeave = function (actor) {
 client.onEvent = function (code, data, actorNr) {
 	switch (code) {
 		case eventShareScreen:
+			console.log("SHARE SCREEN FROM", actorNr);
 			api.onPeerShareScreen(actorNr);
 			break;
 		case eventIceCandidate:
@@ -58,21 +60,22 @@ window.onload = async function () {
 
 	client.connectToRegionMaster("SA");
 
-	api.sendShareScreen = function () {
-		cachedRpc(eventShareScreen, null);
+	api.sendShareScreen = function (targetActorNr) {
+		targeted_rpc(eventShareScreen, null, targetActorNr);
 	}
-	api.sendIceCandidate = function (icec) {
-		cachedRpc(eventIceCandidate, icec);
+	api.sendIceCandidate = function (targetActorNr, eventData) {
+		targeted_rpc(eventIceCandidate, eventData, targetActorNr);
 	};
-	api.sendDescription = function (desc) {
-		cachedRpc(eventDescription, desc);
+	api.sendDescription = function (targetActorNr, eventData) {
+		targeted_rpc(eventDescription, eventData, targetActorNr);
 	}
 }
 
-function cachedRpc(eventId, eventData) {
+function targeted_rpc(eventId, eventData, targetActorNr) {
 	client.raiseEvent(
 		eventId,
 		eventData != null ? JSON.stringify(eventData) : null,
-		{ cache: Photon.LoadBalancing.Constants.EventCaching.AddToRoomCacheGlobal }
+		{ targetActors: [targetActorNr] }
+		//{ cache: Photon.LoadBalancing.Constants.EventCaching.AddToRoomCacheGlobal }
 	);
 }

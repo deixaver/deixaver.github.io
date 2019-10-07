@@ -15,14 +15,13 @@ const api = {
 		} catch { }
 	},
 	onPeerJoined: function (userId) {
-		const c = newConnection();
+		const c = newConnection(userId);
 		state.connections[userId] = c;
 
 		if (state.stream != null) {
 			addOutConnection(c);
 			state.stream.getTracks().forEach((track) => c.pcOut.addTrack(track, state.stream));
-
-			api.sendShareScreen();
+			api.sendShareScreen(userId);
 		}
 	},
 	onPeerLeft: function (userId) {
@@ -32,8 +31,10 @@ const api = {
 		}
 	},
 	onPeerShareScreen: function (userId) {
+		console.log("SHARE SCEREN", userId);
 		const c = state.connections[userId];
 		if (c != null) {
+			console.log("ADD CONNECTION", userId);
 			addInConnection(c);
 		}
 	},
@@ -41,6 +42,7 @@ const api = {
 		const c = state.connections[userId];
 		if (c != null) {
 			const pc = eventData.fromIn ? c.pcOut : c.pcIn;
+			console.log("ON ICE CANDIDATE", userId, eventData.fromIn);
 			pc.addIceCandidate(eventData.candidate);
 		}
 	},
@@ -50,6 +52,7 @@ const api = {
 			return;
 		}
 		const pc = eventData.fromIn ? c.pcOut : c.pcIn;
+		console.log("ON DESCRIPTION", userId, eventData.fromIn);
 
 		if (eventData.description.type === "offer") {
 			await pc.setRemoteDescription(eventData.description);
@@ -57,7 +60,7 @@ const api = {
 				state.stream.getTracks().forEach((track) => pc.addTrack(track, state.stream));
 			}
 			await pc.setLocalDescription(await pc.createAnswer());
-			api.sendDescription({ fromIn: true, description: pc.localDescription });
+			api.sendDescription(userId, { fromIn: true, description: pc.localDescription });
 		} else if (eventData.description.type === "answer") {
 			await pc.setRemoteDescription(eventData.description);
 		} else {
