@@ -1,4 +1,4 @@
-const version = "0.1";
+const version = "0.5";
 
 const maxHeight = 720;
 
@@ -36,7 +36,19 @@ const api = {
 
 		if (state.stream != null) {
 			addOutConnection(c);
-			state.stream.getTracks().forEach((track) => c.pcOut.addTrack(track, state.stream));
+			state.stream.getTracks().forEach(function (track) {
+				const sender = c.pcOut.addTrack(track, state.stream);
+				const trackHeight = track.getSettings().height;
+				const scaleDown = Math.max(trackHeight / maxHeight, 1.0);
+				sender.setParameters({
+					encodings: [
+						{
+							maxFramerate: 10.0,
+							scaleResolutionDownBy: scaleDown,
+						},
+					],
+				});
+			});
 			api.sendShareScreen(userId);
 		}
 	},
