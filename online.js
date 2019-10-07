@@ -1,7 +1,8 @@
 const client = new Photon.LoadBalancing.LoadBalancingClient(Photon.ConnectionProtocol.Wss, "8327ad7d-7bfc-440a-af7c-f8014fd196b5", version);
 
-const event_ice_candidate = 1;
-const event_description = 2;
+const eventShareScreen = 1;
+const eventIceCandidate = 2;
+const eventDescription = 3;
 
 client.onStateChange = function (state) {
 	if (client.isInLobby()) {
@@ -32,16 +33,19 @@ client.onActorLeave = function (actor) {
 	}
 }
 
-client.onEvent = function (code, data, actor_nr) {
+client.onEvent = function (code, data, actorNr) {
 	switch (code) {
-		case event_ice_candidate:
+		case eventShareScreen:
+			api.onPeerShareScreen(actorNr);
+			break;
+		case eventIceCandidate:
 			setTimeout(async function () {
-				await api.onIceCandidate(JSON.parse(data), actor_nr);
+				await api.onIceCandidate(JSON.parse(data), actorNr);
 			}, 0.0);
 			break;
-		case event_description:
+		case eventDescription:
 			setTimeout(async function () {
-				await api.onDescription(JSON.parse(data), actor_nr);
+				await api.onDescription(JSON.parse(data), actorNr);
 			}, 0.0);
 			break;
 		default:
@@ -54,19 +58,21 @@ window.onload = async function () {
 
 	client.connectToRegionMaster("SA");
 
-	api.sendIceCandidate = function (icec) {
-		client.raiseEvent(
-			event_ice_candidate,
-			JSON.stringify(icec),
-			{ cache: Photon.LoadBalancing.Constants.EventCaching.AddToRoomCacheGlobal }
-		);
-	};
-
-	api.sendDescription = function (desc) {
-		client.raiseEvent(
-			event_description,
-			JSON.stringify(desc),
-			{ cache: Photon.LoadBalancing.Constants.EventCaching.AddToRoomCacheGlobal }
-		)
+	api.sendShareScreen = function () {
+		cachedRpc(eventShareScreen, null);
 	}
+	api.sendIceCandidate = function (icec) {
+		cachedRpc(eventIceCandidate, icec);
+	};
+	api.sendDescription = function (desc) {
+		cachedRpc(eventDescription, desc);
+	}
+}
+
+function cachedRpc(eventId, eventData) {
+	client.raiseEvent(
+		eventId,
+		eventData != null ? JSON.stringify(eventData) : null,
+		{ cache: Photon.LoadBalancing.Constants.EventCaching.AddToRoomCacheGlobal }
+	);
 }

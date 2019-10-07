@@ -14,46 +14,58 @@ const api = {
 			});
 		} catch { }
 	},
-	onPeerJoined: function (user_id) {
-		const c = newConnection(state.stream != null);
-		state.connections[user_id] = c;
+	onPeerJoined: function (userId) {
+		const c = newConnection();
+		state.connections[userId] = c;
 
 		if (state.stream != null) {
-			state.stream.getTracks().forEach((track) => c.addTrack(track, state.stream));
+			addOutConnection(c);
+			state.stream.getTracks().forEach((track) => c.pcOut.addTrack(track, state.stream));
+
+			api.sendShareScreen();
 		}
 	},
-	onPeerLeft: function (user_id) {
-		const c = state.connections[user_id];
+	onPeerLeft: function (userId) {
+		const c = state.connections[userId];
 		if (c != null) {
 			destroyConnection(c);
 		}
 	},
-	onIceCandidate: async function (candidate, user_id) {
-		const c = state.connections[user_id];
+	onPeerShareScreen: function (userId) {
+		const c = state.connections[userId];
 		if (c != null) {
-			c.pcIn.addIceCandidate(candidate);
+			addInConnection(c);
 		}
 	},
-	onDescription: async function (desc, user_id) {
-		const c = state.connections[user_id];
+	onIceCandidate: async function (eventData, userId) {
+		const c = state.connections[userId];
+		if (c != null) {
+			const pc = eventData.fromIn ? c.pcOut : c.pcIn;
+			pc.addIceCandidate(eventData.candidate);
+		}
+	},
+	onDescription: async function (eventData, userId) {
+		const c = state.connections[userId];
 		if (c == null) {
 			return;
 		}
+		const pc = eventData.fromIn ? c.pcOut : c.pcIn;
 
-		if (desc.type === "offer") {
-			await c.pcOut.setRemoteDescription(desc);
+		if (eventData.description.type === "offer") {
+			await pc.setRemoteDescription(eventData.description);
 			if (state.stream != null) {
-				state.stream.getTracks().forEach((track) => c.pcOut.addTrack(track, state.stream));
+				state.stream.getTracks().forEach((track) => pc.addTrack(track, state.stream));
 			}
-			await c.pcOut.setLocalDescription(await c.pcOut.createAnswer());
-			api.sendDescription(c.pcOut.localDescription);
-		} else if (desc.type === "answer") {
-			await c.pcIn.setRemoteDescription(desc);
+			await pc.setLocalDescription(await pc.createAnswer());
+			api.sendDescription({ fromIn: true, description: pc.localDescription });
+		} else if (eventData.description.type === "answer") {
+			await pc.setRemoteDescription(eventData.description);
 		} else {
 			console.error("Unsupported SDP type.");
 		}
 	},
 
+	sendShareScreen: function () { },
 	sendIceCandidate: function () { },
 	sendDescription: function () { },
 }
