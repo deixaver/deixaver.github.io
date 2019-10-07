@@ -12,6 +12,7 @@ const api = {
 				video: { cursor: "always" },
 				audio: false
 			});
+			newVideoElement(state.stream);
 		} catch { }
 	},
 	onPeerJoined: function (userId) {

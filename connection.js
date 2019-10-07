@@ -1,5 +1,13 @@
 const videoContainer = document.getElementById("videos");
 
+function newVideoElement(stream) {
+	const video = document.createElement("video");
+	videoContainer.appendChild(video);
+	video.autoplay = true;
+	video.srcObject = stream;
+	return video;
+}
+
 function createRtcConnection(targetUserId, isIn) {
 	//https://gist.github.com/sagivo/3a4b2f2c7ac6e1b5267c2f1f59ac6c6b
 	const pc = new RTCPeerConnection({
@@ -35,10 +43,8 @@ function addInConnection(connection) {
 	connection.pcIn = createRtcConnection(connection.targetUserId, true);
 	connection.pcIn.ontrack = function (e) {
 		if (connection.screenVideo === null) {
-			connection.screenVideo = document.createElement("video");
-			videoContainer.appendChild(connection.screenVideo);
-			connection.screenVideo.autoplay = true;
-			connection.screenVideo.srcObject = e.streams[0];
+			console.log("ADD IN CONNECTION", connection.targetUserId, "stream count:", e.streams.length);
+			connection.screenVideo = newVideoElement(e.streams[0]);
 		}
 	};
 }
