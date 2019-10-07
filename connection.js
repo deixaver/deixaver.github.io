@@ -18,7 +18,11 @@ function createRtcConnection(targetUserId, isIn) {
 		api.sendIceCandidate(targetUserId, { fromIn: isIn, candidate: e.candidate });
 	};
 	pc.onnegotiationneeded = async function () {
-		await pc.setLocalDescription(await pc.createOffer());
+		const offer = await pc.createOffer({
+			offerToReceiveAudio: 0,
+			offerToReceiveVideo: 1
+		});
+		await pc.setLocalDescription(offer);
 		api.sendDescription(targetUserId, { fromIn: isIn, description: pc.localDescription });
 	};
 
