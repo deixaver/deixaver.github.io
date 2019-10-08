@@ -54,9 +54,7 @@ client.onEvent = function (code, data, actorNr) {
 }
 
 window.onload = async function () {
-	console.log("location:", window.location.pathname);
-
-	await api.shareScreen(true);
+	await api.shareScreen(window.location.hash === "#cam");
 
 	client.connectToRegionMaster("SA");
 
