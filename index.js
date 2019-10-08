@@ -10,19 +10,20 @@ const state = {
 const api = {
 	shareScreen: async function () {
 		try {
+			const maxWidth = maxHeight * 16.0 / 9.0;
 			state.stream = await navigator.mediaDevices.getDisplayMedia({
 				audio: false,
 				video: {
 					cursor: "always",
-					width: maxHeight * 16.0 / 9.0,
-					height: maxHeight,
+					width: { max: maxWidth },
+					height: { max: maxHeight },
 					frameRate: 10.0,
 				},
 			});
 			// state.stream = await navigator.mediaDevices.getUserMedia({
 			// 	audio: false,
 			// 	video: {
-			// 		width: maxHeight * 16.0 / 9.0,
+			// 		width: maxWidth,
 			// 		height: maxHeight,
 			// 		frameRate: 10.0,
 			// 	},

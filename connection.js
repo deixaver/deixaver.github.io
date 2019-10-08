@@ -17,7 +17,7 @@ function newVideoElement(stream) {
 
 function updateGridLayout() {
 	const videoCount = videoContainer.childElementCount;
-	const columns = Math.max(Math.round(Math.sqrt(videoCount)), 1);
+	const columns = Math.max(Math.ceil(Math.sqrt(videoCount)), 1);
 	videoContainer.style = "grid-template-columns:" + "auto ".repeat(columns);
 }
 
