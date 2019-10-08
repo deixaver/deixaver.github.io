@@ -55,7 +55,7 @@ const api = {
 				const sender = c.pcOut.addTrack(track, stream);
 				const trackHeight = track.getSettings().height;
 				const scaleDown = Math.max(trackHeight / maxHeight, 1.0);
-				const parameters = {};
+				const parameters = sender.getParameters();
 				parameters.encodings = [
 					{
 						maxFramerate: 10,
@@ -112,15 +112,13 @@ const api = {
 
 		c.isFullscreen = !c.isFullscreen;
 
-		const tracks = state.screenStream.getTracks();
 		const senders = c.pcOut.getSenders();
-		for (let i in tracks) {
-			const trackHeight = tracks[i].getSettings().height;
+		for (let sender of senders) {
+			const trackHeight = sender.track.getSettings().height;
 			const maxHeight = c.isFullscreen ?
 				screenMaxHeightFullscreen :
 				screenMaxHeightWindowed;
 			const scaleDown = Math.max(trackHeight / maxHeight, 1.0);
-			const sender = senders[i];
 			const parameters = sender.getParameters();
 			parameters.encodings = [
 				{
