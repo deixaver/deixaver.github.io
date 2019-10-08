@@ -49,29 +49,15 @@ const api = {
 		const cc = newConnection(userId, false);
 		state.cameraConnections[userId] = cc;
 
-		const sendVideo = function (c, stream, maxHeight) {
-			addOutConnection(c);
-			stream.getTracks().forEach(function (track) {
-				const sender = c.pcOut.addTrack(track, stream);
-				const trackHeight = track.getSettings().height;
-				const scaleDown = Math.max(trackHeight / maxHeight, 1.0);
-				const parameters = sender.getParameters();
-				parameters.encodings = [
-					{
-						maxFramerate: 10,
-						scaleResolutionDownBy: scaleDown,
-					},
-				];
-				sender.setParameters(parameters);
-			});
-			api.sendShareVideo(userId, { fromScreen: c.isScreen });
-		};
-
 		if (state.screenStream != null) {
-			sendVideo(sc, state.screenStream, screenMaxHeightWindowed);
+			addOutConnection(sc);
+			addStreamTracks(sc.pcOut, state.screenStream, screenMaxHeightWindowed);
+			api.sendShareVideo(userId, { fromScreen: true });
 		}
 		if (state.cameraStream != null) {
-			sendVideo(cc, state.cameraStream, cameraMaxHeight);
+			addOutConnection(cc);
+			addStreamTracks(cc.pcOut, state.cameraStream, cameraMaxHeight);
+			api.sendShareVideo(userId, { fromScreen: true });
 		}
 	},
 	onPeerLeft: function (userId) {
@@ -112,21 +98,13 @@ const api = {
 
 		c.isFullscreen = !c.isFullscreen;
 
+		const maxHeight = c.isFullscreen ?
+			screenMaxHeightFullscreen :
+			screenMaxHeightWindowed;
+
 		const senders = c.pcOut.getSenders();
 		for (let sender of senders) {
-			const trackHeight = sender.track.getSettings().height;
-			const maxHeight = c.isFullscreen ?
-				screenMaxHeightFullscreen :
-				screenMaxHeightWindowed;
-			const scaleDown = Math.max(trackHeight / maxHeight, 1.0);
-			const parameters = sender.getParameters();
-			parameters.encodings = [
-				{
-					maxFramerate: 10.0,
-					scaleResolutionDownBy: scaleDown,
-				},
-			];
-			sender.setParameters(parameters);
+			setSenderParameters(sender, maxHeight);
 		}
 	},
 	onIceCandidate: async function (userId, eventData) {
@@ -149,8 +127,13 @@ const api = {
 
 		if (eventData.description.type === "offer") {
 			await pc.setRemoteDescription(eventData.description);
-			if (state.screenStream != null) {
-				state.screenStream.getTracks().forEach((track) => pc.addTrack(track, state.screenStream));
+			if (eventData.fromScreen) {
+				const maxHeight = c.isFullscreen ?
+					screenMaxHeightFullscreen :
+					screenMaxHeightWindowed;
+				addStreamTracks(pc, state.screenStream, maxHeight);
+			} else {
+				addStreamTracks(pc, state.cameraStream, cameraMaxHeight);
 			}
 			await pc.setLocalDescription(await pc.createAnswer());
 			api.sendDescription(userId, { fromIn: true, fromScreen: c.isScreen, description: pc.localDescription });
@@ -165,4 +148,28 @@ const api = {
 	sendRequestScreenResolution: function () { },
 	sendIceCandidate: function () { },
 	sendDescription: function () { },
+}
+
+function addStreamTracks(pc, stream, maxHeight) {
+	if (stream != null) {
+		for (let track of stream.getTracks()) {
+			const sender = pc.addTrack(track, stream);
+			setSenderParameters(sender, maxHeight);
+		}
+	}
+}
+
+function setSenderParameters(sender, maxHeight) {
+	const trackHeight = sender.track.getSettings().height;
+	const scaleDown = Math.max(trackHeight / maxHeight, 1.0);
+	const parameters = sender.getParameters();
+	parameters.encodings = [
+		{
+			maxFramerate: 10,
+			scaleResolutionDownBy: scaleDown,
+		},
+	];
+	sender.setParameters(parameters).catch(function (error) {
+		console.error("DEU UM RUIM", error);
+	});
 }
