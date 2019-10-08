@@ -55,14 +55,14 @@ const api = {
 				const sender = c.pcOut.addTrack(track, stream);
 				const trackHeight = track.getSettings().height;
 				const scaleDown = Math.max(trackHeight / maxHeight, 1.0);
-				sender.setParameters({
-					encodings: [
-						{
-							maxFramerate: 10.0,
-							scaleResolutionDownBy: scaleDown,
-						},
-					],
-				});
+				const parameters = {};
+				parameters.encodings = [
+					{
+						maxFramerate: 10,
+						scaleResolutionDownBy: scaleDown,
+					},
+				];
+				sender.setParameters(parameters);
 			});
 			api.sendShareVideo(userId, { fromScreen: c.isScreen });
 		};
@@ -95,7 +95,6 @@ const api = {
 		addInConnection(c, function () {
 			if (c.isScreen) {
 				c.video.addEventListener("dblclick", function () {
-					console.log("request resulution toggle");
 					api.sendRequestScreenResolution(userId, {});
 				});
 			}
@@ -121,14 +120,15 @@ const api = {
 				screenMaxHeightFullscreen :
 				screenMaxHeightWindowed;
 			const scaleDown = Math.max(trackHeight / maxHeight, 1.0);
-			senders[i].setParameters({
-				encodings: [
-					{
-						maxFramerate: 10.0,
-						scaleResolutionDownBy: scaleDown,
-					},
-				],
-			});
+			const sender = senders[i];
+			const parameters = sender.getParameters();
+			parameters.encodings = [
+				{
+					maxFramerate: 10.0,
+					scaleResolutionDownBy: scaleDown,
+				},
+			];
+			sender.setParameters(parameters);
 		}
 	},
 	onIceCandidate: async function (userId, eventData) {
