@@ -16,7 +16,7 @@ const api = {
 					cursor: "always",
 					width: maxHeight * 16.0 / 9.0,
 					height: maxHeight,
-					frameRate: 10,
+					frameRate: 10.0,
 				},
 			});
 			// state.stream = await navigator.mediaDevices.getUserMedia({
@@ -24,7 +24,7 @@ const api = {
 			// 	video: {
 			// 		width: maxHeight * 16.0 / 9.0,
 			// 		height: maxHeight,
-			// 		frameRate: 10,
+			// 		frameRate: 10.0,
 			// 	},
 			// });
 			newVideoElement(state.stream);
