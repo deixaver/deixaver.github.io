@@ -1,6 +1,7 @@
 const version = "0.5";
 
-const maxHeight = 720;
+const maximizedMaxHeight = 720;
+const minimizedMaxHeight = 720;
 
 const state = {
 	connections: {},
@@ -14,8 +15,8 @@ const api = {
 				audio: false,
 				video: {
 					cursor: "always",
-					width: maxHeight * 16.0 / 9.0,
-					height: maxHeight,
+					width: maximizedMaxHeight * 16.0 / 9.0,
+					height: maximizedMaxHeight,
 					frameRate: 10,
 				},
 			});
@@ -39,7 +40,7 @@ const api = {
 			state.stream.getTracks().forEach(function (track) {
 				const sender = c.pcOut.addTrack(track, state.stream);
 				const trackHeight = track.getSettings().height;
-				const scaleDown = Math.max(trackHeight / maxHeight, 1.0);
+				const scaleDown = Math.max(trackHeight / maximizedMaxHeight, 1.0);
 				sender.setParameters({
 					encodings: [
 						{
@@ -59,10 +60,8 @@ const api = {
 		}
 	},
 	onPeerShareScreen: function (userId) {
-		console.log("SHARE SCEREN", userId);
 		const c = state.connections[userId];
 		if (c != null) {
-			console.log("ADD CONNECTION", userId);
 			addInConnection(c);
 		}
 	},
@@ -70,7 +69,6 @@ const api = {
 		const c = state.connections[userId];
 		if (c != null) {
 			const pc = eventData.fromIn ? c.pcOut : c.pcIn;
-			console.log("ON ICE CANDIDATE", userId, eventData.fromIn);
 			pc.addIceCandidate(eventData.candidate);
 		}
 	},
@@ -80,7 +78,6 @@ const api = {
 			return;
 		}
 		const pc = eventData.fromIn ? c.pcOut : c.pcIn;
-		console.log("ON DESCRIPTION", userId, eventData.fromIn);
 
 		if (eventData.description.type === "offer") {
 			await pc.setRemoteDescription(eventData.description);

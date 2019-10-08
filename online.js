@@ -11,7 +11,6 @@ client.onStateChange = function (state) {
 
 	if (state == Photon.LoadBalancing.LoadBalancingClient.State.Joined) {
 		const localActorNr = client.myActor().actorNr;
-		console.log("HI!! IM ACTOR NR", localActorNr);
 		for (let actor of client.actorsArray) {
 			if (actor.actorNr != localActorNr) {
 				api.onPeerJoined(actor.actorNr);
@@ -37,7 +36,6 @@ client.onActorLeave = function (actor) {
 client.onEvent = function (code, data, actorNr) {
 	switch (code) {
 		case eventShareScreen:
-			console.log("SHARE SCREEN FROM", actorNr);
 			api.onPeerShareScreen(actorNr);
 			break;
 		case eventIceCandidate:

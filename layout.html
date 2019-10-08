@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="utf-8">
+	<title>Share Screen</title>
+	<link rel="stylesheet" type="text/css" href="style.css">
+	<script>
+		function test(e) {
+			if (e.className === "elem fullscreen") {
+				e.className = "elem ";
+			} else {
+				e.className = "elem fullscreen";
+			}
+		}
+	</script>
+</head>
+
+<body oncontextmenu="return false;">
+	<div id="videos">
+		<div class="elem" style="background-color: red" ondblclick="test(this)"></div>
+		<div class="elem asd" style="background-color: blue" ondblclick="test(this)"></div>
+		<div class="elem" style="background-color: yellow" ondblclick="test(this)"></div>
+		<div class="elem" style="background-color: green" ondblclick="test(this)"></div>
+		<div class="elem" style="background-color: magenta" ondblclick="test(this)"></div>
+	</div>
+</body>
+
+</html>

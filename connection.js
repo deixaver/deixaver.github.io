@@ -5,13 +5,19 @@ function newVideoElement(stream) {
 	videoContainer.appendChild(video);
 	video.autoplay = true;
 	video.srcObject = stream;
+	video.ondblclick = function (e) {
+		if (e.target.className === "fullscreen") {
+			e.target.className = "";
+		} else {
+			e.target.className = "fullscreen";
+		}
+	};
 	return video;
 }
 
 function updateGridLayout() {
-	const count = videoContainer.childElementCount;
-	const columns = Math.min(Math.round(Math.sqrt(count)), 1);
-	console.log("NEW COLUMN COUNT", columns);
+	const videoCount = videoContainer.childElementCount;
+	const columns = Math.max(Math.round(Math.sqrt(videoCount)), 1);
 	videoContainer.style = "grid-template-columns:" + "auto ".repeat(columns);
 }
 
@@ -54,7 +60,6 @@ function addInConnection(connection) {
 	connection.pcIn = createRtcConnection(connection.targetUserId, true);
 	connection.pcIn.ontrack = function (e) {
 		if (connection.screenVideo === null) {
-			console.log("ADD IN CONNECTION", connection.targetUserId, "stream count:", e.streams.length);
 			connection.screenVideo = newVideoElement(e.streams[0]);
 			updateGridLayout();
 		}
