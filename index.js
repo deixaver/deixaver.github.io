@@ -1,7 +1,6 @@
 const version = "0.5";
 
-const maximizedMaxHeight = 720;
-const minimizedMaxHeight = 720;
+const maxHeight = 720;
 
 const state = {
 	connections: {},
@@ -15,8 +14,8 @@ const api = {
 				audio: false,
 				video: {
 					cursor: "always",
-					width: maximizedMaxHeight * 16.0 / 9.0,
-					height: maximizedMaxHeight,
+					width: maxHeight * 16.0 / 9.0,
+					height: maxHeight,
 					frameRate: 10,
 				},
 			});
@@ -40,7 +39,7 @@ const api = {
 			state.stream.getTracks().forEach(function (track) {
 				const sender = c.pcOut.addTrack(track, state.stream);
 				const trackHeight = track.getSettings().height;
-				const scaleDown = Math.max(trackHeight / maximizedMaxHeight, 1.0);
+				const scaleDown = Math.max(trackHeight / maxHeight, 1.0);
 				sender.setParameters({
 					encodings: [
 						{
