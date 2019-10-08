@@ -1,7 +1,7 @@
 const version = "0.5";
 
 const screenMaxHeight = 720;
-const cameraMaxHeight = 240;
+const cameraMaxHeight = 120;
 
 const state = {
 	screenConnections: {},
@@ -37,7 +37,8 @@ const api = {
 						frameRate: 10.0,
 					},
 				});
-				newVideoElement(state.cameraStream);
+				const cameraVideo = newVideoElement(state.cameraStream);
+				cameraVideo.style = "transform: scale(-1, 1)";
 			}
 		} catch { }
 	},
