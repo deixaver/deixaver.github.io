@@ -71,10 +71,12 @@ const api = {
 		}
 	},
 	onPeerShareVideo: function (userId, eventData) {
+		console.log("onPeerShareVideo", eventData);
 		const c = eventData.fromScreen ?
 			state.screenConnections[userId] :
 			state.cameraConnections[userId];
 		if (c == null) {
+			console.log("on peer share video c null");
 			return;
 		}
 
@@ -86,7 +88,8 @@ const api = {
 			}
 		});
 	},
-	onPeerRequestScreenResolution: function (userId, eventData) {
+	onPeerRequestScreenResolution: function (userId, _eventData) {
+		console.log("onPeerRequestScreenResolution", state.screenStream);
 		if (state.screenStream == null) {
 			return;
 		}
@@ -108,6 +111,7 @@ const api = {
 		}
 	},
 	onIceCandidate: async function (userId, eventData) {
+		console.log("onIceCandidate ", eventData);
 		const c = eventData.fromScreen ?
 			state.screenConnections[userId] :
 			state.cameraConnections[userId];
@@ -117,6 +121,7 @@ const api = {
 		}
 	},
 	onDescription: async function (userId, eventData) {
+		console.log("onDescription ", eventData);
 		const c = eventData.fromScreen ?
 			state.screenConnections[userId] :
 			state.cameraConnections[userId];
@@ -163,13 +168,17 @@ function setSenderParameters(sender, maxHeight) {
 	const trackHeight = sender.track.getSettings().height;
 	const scaleDown = Math.max(trackHeight / maxHeight, 1.0);
 	const parameters = sender.getParameters();
-	parameters.encodings = [
-		{
-			maxFramerate: 10,
-			scaleResolutionDownBy: scaleDown,
-		},
-	];
+	if (parameters.encodings == null) {
+		parameters.encodings = [{}];
+	}
+	if (parameters.encodings.length > 0) {
+		parameters.encodings[0].maxFramerate = 10;
+		parameters.encodings[0].scaleResolutionDownBy = scaleDown;
+	}
 	sender.setParameters(parameters).catch(function (error) {
-		console.error("DEU UM RUIM", error);
+		console.error("DEU UM RUIM:");
+		console.log(error.name);
+		console.log(error.message);
+		console.log(parameters);
 	});
 }
