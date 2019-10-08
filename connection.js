@@ -12,6 +12,7 @@ function newVideoElement(stream) {
 			e.target.className = "fullscreen";
 		}
 	};
+	updateGridLayout();
 	return video;
 }
 
@@ -21,14 +22,14 @@ function updateGridLayout() {
 	videoContainer.style = "grid-template-columns:" + "auto ".repeat(columns);
 }
 
-function createRtcConnection(targetUserId, isIn) {
+function createRtcConnection(targetUserId, isIn, isScreen) {
 	//https://gist.github.com/sagivo/3a4b2f2c7ac6e1b5267c2f1f59ac6c6b
 	const pc = new RTCPeerConnection({
 		iceServers: [{ urls: "stun:stun.l.google.com:19302" }]
 	});
 
 	pc.onicecandidate = function (e) {
-		api.sendIceCandidate(targetUserId, { fromIn: isIn, candidate: e.candidate });
+		api.sendIceCandidate(targetUserId, { fromIn: isIn, fromScreen: isScreen, candidate: e.candidate });
 	};
 	pc.onnegotiationneeded = async function () {
 		const offer = await pc.createOffer({
@@ -36,39 +37,39 @@ function createRtcConnection(targetUserId, isIn) {
 			offerToReceiveVideo: 1
 		});
 		await pc.setLocalDescription(offer);
-		api.sendDescription(targetUserId, { fromIn: isIn, description: pc.localDescription });
+		api.sendDescription(targetUserId, { fromIn: isIn, fromScreen: isScreen, description: pc.localDescription });
 	};
 
 	return pc;
 }
 
-function newConnection(targetUserId) {
+function newConnection(targetUserId, isScreen) {
 	const c = {
 		targetUserId: targetUserId,
+		isScreen: isScreen,
 		pcIn: null,
 		pcOut: null,
-		screenVideo: null,
+		video: null,
 	};
 	return c;
 }
 
 function addOutConnection(connection) {
-	connection.pcOut = createRtcConnection(connection.targetUserId, false);
+	connection.pcOut = createRtcConnection(connection.targetUserId, false, connection.isScreen);
 }
 
 function addInConnection(connection) {
-	connection.pcIn = createRtcConnection(connection.targetUserId, true);
+	connection.pcIn = createRtcConnection(connection.targetUserId, true, connection.isScreen);
 	connection.pcIn.ontrack = function (e) {
-		if (connection.screenVideo === null) {
-			connection.screenVideo = newVideoElement(e.streams[0]);
-			updateGridLayout();
+		if (connection.video === null) {
+			connection.video = newVideoElement(e.streams[0]);
 		}
 	};
 }
 
 function deleteConnection(connection) {
-	if (connection.screenVideo != null) {
-		videoContainer.removeChild(connection.screenVideo);
+	if (connection.video != null) {
+		videoContainer.removeChild(connection.video);
 		updateGridLayout();
 	}
 

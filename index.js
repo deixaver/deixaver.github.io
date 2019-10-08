@@ -1,44 +1,56 @@
 const version = "0.5";
 
-const maxHeight = 720;
+const screenMaxHeight = 720;
+const cameraMaxHeight = 240;
 
 const state = {
-	connections: {},
-	stream: null,
+	screenConnections: {},
+	cameraConnections: {},
+	screenStream: null,
+	cameraStream: null,
 }
 
 const api = {
-	shareScreen: async function () {
+	shareScreen: async function (shareCamera) {
 		try {
-			const maxWidth = maxHeight * 16.0 / 9.0;
-			state.stream = await navigator.mediaDevices.getDisplayMedia({
+			const screenMaxWidth = screenMaxHeight * 16.0 / 9.0;
+			state.screenStream = await navigator.mediaDevices.getDisplayMedia({
 				audio: false,
 				video: {
 					cursor: "always",
-					width: { max: maxWidth },
-					height: { max: maxHeight },
+					width: { max: screenMaxWidth },
+					height: { max: screenMaxHeight },
 					frameRate: 10.0,
 				},
 			});
-			// state.stream = await navigator.mediaDevices.getUserMedia({
-			// 	audio: false,
-			// 	video: {
-			// 		width: maxWidth,
-			// 		height: maxHeight,
-			// 		frameRate: 10.0,
-			// 	},
-			// });
-			newVideoElement(state.stream);
+			newVideoElement(state.screenStream);
+		} catch { }
+
+		try {
+			if (shareCamera) {
+				const cameraMaxWidth = cameraMaxHeight * 16.0 / 9.0;
+				state.cameraStream = await navigator.mediaDevices.getUserMedia({
+					audio: false,
+					video: {
+						width: cameraMaxWidth,
+						height: cameraMaxHeight,
+						frameRate: 10.0,
+					},
+				});
+				newVideoElement(state.cameraStream);
+			}
 		} catch { }
 	},
 	onPeerJoined: function (userId) {
-		const c = newConnection(userId);
-		state.connections[userId] = c;
+		const sc = newConnection(userId, true);
+		state.screenConnections[userId] = sc;
+		const cc = newConnection(userId, false);
+		state.cameraConnections[userId] = cc;
 
-		if (state.stream != null) {
+		const sendVideo = function (c, stream, maxHeight) {
 			addOutConnection(c);
-			state.stream.getTracks().forEach(function (track) {
-				const sender = c.pcOut.addTrack(track, state.stream);
+			stream.getTracks().forEach(function (track) {
+				const sender = c.pcOut.addTrack(track, stream);
 				const trackHeight = track.getSettings().height;
 				const scaleDown = Math.max(trackHeight / maxHeight, 1.0);
 				sender.setParameters({
@@ -50,30 +62,47 @@ const api = {
 					],
 				});
 			});
-			api.sendShareScreen(userId);
+			api.sendShareVideo(userId, { fromScreen: c.isScreen });
+		};
+
+		if (state.screenStream != null) {
+			sendVideo(sc, state.screenStream, screenMaxHeight);
+		}
+		if (state.cameraStream != null) {
+			sendVideo(cc, state.cameraStream, cameraMaxHeight);
 		}
 	},
 	onPeerLeft: function (userId) {
-		const c = state.connections[userId];
-		if (c != null) {
-			deleteConnection(c);
+		const sc = state.screenConnections[userId];
+		if (sc != null) {
+			deleteConnection(sc);
+		}
+		const cc = state.cameraConnections[userId];
+		if (cc != null) {
+			deleteConnection(cc);
 		}
 	},
-	onPeerShareScreen: function (userId) {
-		const c = state.connections[userId];
+	onPeerShareVideo: function (userId, eventData) {
+		const c = eventData.fromScreen ?
+			state.screenConnections[userId] :
+			state.cameraConnections[userId];
 		if (c != null) {
 			addInConnection(c);
 		}
 	},
-	onIceCandidate: async function (eventData, userId) {
-		const c = state.connections[userId];
+	onIceCandidate: async function (userId, eventData) {
+		const c = eventData.fromScreen ?
+			state.screenConnections[userId] :
+			state.cameraConnections[userId];
 		if (c != null) {
 			const pc = eventData.fromIn ? c.pcOut : c.pcIn;
 			pc.addIceCandidate(eventData.candidate);
 		}
 	},
-	onDescription: async function (eventData, userId) {
-		const c = state.connections[userId];
+	onDescription: async function (userId, eventData) {
+		const c = eventData.fromScreen ?
+			state.screenConnections[userId] :
+			state.cameraConnections[userId];
 		if (c == null) {
 			return;
 		}
@@ -81,11 +110,11 @@ const api = {
 
 		if (eventData.description.type === "offer") {
 			await pc.setRemoteDescription(eventData.description);
-			if (state.stream != null) {
-				state.stream.getTracks().forEach((track) => pc.addTrack(track, state.stream));
+			if (state.screenStream != null) {
+				state.screenStream.getTracks().forEach((track) => pc.addTrack(track, state.screenStream));
 			}
 			await pc.setLocalDescription(await pc.createAnswer());
-			api.sendDescription(userId, { fromIn: true, description: pc.localDescription });
+			api.sendDescription(userId, { fromIn: true, fromScreen: c.isScreen, description: pc.localDescription });
 		} else if (eventData.description.type === "answer") {
 			await pc.setRemoteDescription(eventData.description);
 		} else {
@@ -93,7 +122,7 @@ const api = {
 		}
 	},
 
-	sendShareScreen: function () { },
+	sendShareVideo: function () { },
 	sendIceCandidate: function () { },
 	sendDescription: function () { },
 }

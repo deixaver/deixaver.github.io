@@ -1,6 +1,6 @@
 const client = new Photon.LoadBalancing.LoadBalancingClient(Photon.ConnectionProtocol.Wss, "8327ad7d-7bfc-440a-af7c-f8014fd196b5", version);
 
-const eventShareScreen = 1;
+const eventShareVideo = 1;
 const eventIceCandidate = 2;
 const eventDescription = 3;
 
@@ -35,17 +35,17 @@ client.onActorLeave = function (actor) {
 
 client.onEvent = function (code, data, actorNr) {
 	switch (code) {
-		case eventShareScreen:
-			api.onPeerShareScreen(actorNr);
+		case eventShareVideo:
+			api.onPeerShareVideo(actorNr, JSON.parse(data));
 			break;
 		case eventIceCandidate:
 			setTimeout(async function () {
-				await api.onIceCandidate(JSON.parse(data), actorNr);
+				await api.onIceCandidate(actorNr, JSON.parse(data));
 			}, 0.0);
 			break;
 		case eventDescription:
 			setTimeout(async function () {
-				await api.onDescription(JSON.parse(data), actorNr);
+				await api.onDescription(actorNr, JSON.parse(data));
 			}, 0.0);
 			break;
 		default:
@@ -54,12 +54,12 @@ client.onEvent = function (code, data, actorNr) {
 }
 
 window.onload = async function () {
-	await api.shareScreen();
+	await api.shareScreen(true);
 
 	client.connectToRegionMaster("SA");
 
-	api.sendShareScreen = function (targetActorNr) {
-		targeted_rpc(eventShareScreen, null, targetActorNr);
+	api.sendShareVideo = function (targetActorNr, eventData) {
+		targeted_rpc(eventShareVideo, eventData, targetActorNr);
 	}
 	api.sendIceCandidate = function (targetActorNr, eventData) {
 		targeted_rpc(eventIceCandidate, eventData, targetActorNr);
@@ -72,7 +72,7 @@ window.onload = async function () {
 function targeted_rpc(eventId, eventData, targetActorNr) {
 	client.raiseEvent(
 		eventId,
-		eventData != null ? JSON.stringify(eventData) : null,
+		JSON.stringify(eventData),
 		{ targetActors: [targetActorNr] }
 		//{ cache: Photon.LoadBalancing.Constants.EventCaching.AddToRoomCacheGlobal }
 	);
