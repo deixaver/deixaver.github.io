@@ -5,13 +5,13 @@ function newVideoElement(stream) {
 	videoContainer.appendChild(video);
 	video.autoplay = true;
 	video.srcObject = stream;
-	video.ondblclick = function (e) {
+	video.addEventListener("dblclick", function (e) {
 		if (e.target.className === "fullscreen") {
 			e.target.className = "";
 		} else {
 			e.target.className = "fullscreen";
 		}
-	};
+	});
 	updateGridLayout();
 	return video;
 }
@@ -47,6 +47,7 @@ function newConnection(targetUserId, isScreen) {
 	const c = {
 		targetUserId: targetUserId,
 		isScreen: isScreen,
+		isFullscreen: false,
 		pcIn: null,
 		pcOut: null,
 		video: null,
@@ -58,11 +59,12 @@ function addOutConnection(connection) {
 	connection.pcOut = createRtcConnection(connection.targetUserId, false, connection.isScreen);
 }
 
-function addInConnection(connection) {
+function addInConnection(connection, onTrack) {
 	connection.pcIn = createRtcConnection(connection.targetUserId, true, connection.isScreen);
 	connection.pcIn.ontrack = function (e) {
 		if (connection.video === null) {
 			connection.video = newVideoElement(e.streams[0]);
+			onTrack();
 		}
 	};
 }

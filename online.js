@@ -1,8 +1,9 @@
 const client = new Photon.LoadBalancing.LoadBalancingClient(Photon.ConnectionProtocol.Wss, "8327ad7d-7bfc-440a-af7c-f8014fd196b5", version);
 
 const eventShareVideo = 1;
-const eventIceCandidate = 2;
-const eventDescription = 3;
+const eventRequestScreenResolution = 2;
+const eventIceCandidate = 3;
+const eventDescription = 4;
 
 client.onStateChange = function (state) {
 	if (client.isInLobby()) {
@@ -38,6 +39,9 @@ client.onEvent = function (code, data, actorNr) {
 		case eventShareVideo:
 			api.onPeerShareVideo(actorNr, JSON.parse(data));
 			break;
+		case eventRequestScreenResolution:
+			api.onPeerRequestScreenResolution(actorNr, JSON.parse(data));
+			break;
 		case eventIceCandidate:
 			setTimeout(async function () {
 				await api.onIceCandidate(actorNr, JSON.parse(data));
@@ -63,13 +67,16 @@ window.onload = async function () {
 
 	api.sendShareVideo = function (targetActorNr, eventData) {
 		targeted_rpc(eventShareVideo, eventData, targetActorNr);
-	}
+	};
+	api.sendRequestScreenResolution = function (targetActorNr, eventData) {
+		targeted_rpc(eventRequestScreenResolution, eventData, targetActorNr);
+	};
 	api.sendIceCandidate = function (targetActorNr, eventData) {
 		targeted_rpc(eventIceCandidate, eventData, targetActorNr);
 	};
 	api.sendDescription = function (targetActorNr, eventData) {
 		targeted_rpc(eventDescription, eventData, targetActorNr);
-	}
+	};
 }
 
 function targeted_rpc(eventId, eventData, targetActorNr) {

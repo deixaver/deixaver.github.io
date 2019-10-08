@@ -1,6 +1,7 @@
 const version = "0.5";
 
-const screenMaxHeight = 720;
+const screenMaxHeightWindowed = 120;
+const screenMaxHeightFullscreen = 960;
 const cameraMaxHeight = 120;
 
 const state = {
@@ -13,13 +14,13 @@ const state = {
 const api = {
 	shareScreen: async function (shareCamera) {
 		try {
-			const screenMaxWidth = screenMaxHeight * 16.0 / 9.0;
+			const screenMaxWidth = screenMaxHeightFullscreen * 16.0 / 9.0;
 			state.screenStream = await navigator.mediaDevices.getDisplayMedia({
 				audio: false,
 				video: {
 					cursor: "always",
 					width: { max: screenMaxWidth },
-					height: { max: screenMaxHeight },
+					height: { max: screenMaxHeightFullscreen },
 					frameRate: 10.0,
 				},
 			});
@@ -67,7 +68,7 @@ const api = {
 		};
 
 		if (state.screenStream != null) {
-			sendVideo(sc, state.screenStream, screenMaxHeight);
+			sendVideo(sc, state.screenStream, screenMaxHeightWindowed);
 		}
 		if (state.cameraStream != null) {
 			sendVideo(cc, state.cameraStream, cameraMaxHeight);
@@ -87,8 +88,47 @@ const api = {
 		const c = eventData.fromScreen ?
 			state.screenConnections[userId] :
 			state.cameraConnections[userId];
-		if (c != null) {
-			addInConnection(c);
+		if (c == null) {
+			return;
+		}
+
+		addInConnection(c, function () {
+			if (c.isScreen) {
+				c.video.addEventListener("dblclick", function () {
+					console.log("request resulution toggle");
+					api.sendRequestScreenResolution(userId, {});
+				});
+			}
+		});
+	},
+	onPeerRequestScreenResolution: function (userId, eventData) {
+		if (state.screenStream == null) {
+			return;
+		}
+
+		const c = state.screenConnections[userId];
+		if (c == null) {
+			return;
+		}
+
+		c.isFullscreen = !c.isFullscreen;
+
+		const tracks = state.screenStream.getTracks();
+		const senders = c.pcOut.getSenders();
+		for (let i in tracks) {
+			const trackHeight = tracks[i].getSettings().height;
+			const maxHeight = c.isFullscreen ?
+				screenMaxHeightFullscreen :
+				screenMaxHeightWindowed;
+			const scaleDown = Math.max(trackHeight / maxHeight, 1.0);
+			senders[i].setParameters({
+				encodings: [
+					{
+						maxFramerate: 10.0,
+						scaleResolutionDownBy: scaleDown,
+					},
+				],
+			});
 		}
 	},
 	onIceCandidate: async function (userId, eventData) {
@@ -124,6 +164,7 @@ const api = {
 	},
 
 	sendShareVideo: function () { },
+	sendRequestScreenResolution: function () { },
 	sendIceCandidate: function () { },
 	sendDescription: function () { },
 }
