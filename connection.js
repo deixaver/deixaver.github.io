@@ -12,6 +12,7 @@ function newVideoElement(stream) {
 			e.target.className = "fullscreen";
 		}
 	});
+	video.play();
 	updateGridLayout();
 	return video;
 }
