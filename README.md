@@ -1,2 +1,2 @@
-# deixaver.github.io
-Compartilha tua tela aí
+# sharescreen.github.io
+Lemme see ya screen
