@@ -124,6 +124,9 @@ const api = {
 			return;
 		}
 		const pc = eventData.fromIn ? c.pcOut : c.pcIn;
+		if (pc == null) {
+			return;
+		}
 
 		if (eventData.description.type === "offer") {
 			await pc.setRemoteDescription(eventData.description);
