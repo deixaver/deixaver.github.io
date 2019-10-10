@@ -1,7 +1,7 @@
 const version = "0.5";
 
-const screenMaxHeightWindowed = 120;
-const screenMaxHeightFullscreen = 960;
+const screenMaxHeightLow = 120;
+const screenMaxHeightHigh = 960;
 const cameraMaxHeight = 120;
 
 const state = {
@@ -14,13 +14,13 @@ const state = {
 const api = {
 	shareScreen: async function (shareCamera) {
 		try {
-			const screenMaxWidth = screenMaxHeightFullscreen * 16.0 / 9.0;
+			const screenMaxWidth = screenMaxHeightHigh * 16.0 / 9.0;
 			state.screenStream = await navigator.mediaDevices.getDisplayMedia({
 				audio: false,
 				video: {
 					cursor: "always",
 					width: { max: screenMaxWidth },
-					height: { max: screenMaxHeightFullscreen },
+					height: { max: screenMaxHeightHigh },
 					frameRate: 10.0,
 				},
 			});
@@ -51,7 +51,7 @@ const api = {
 
 		if (state.screenStream != null) {
 			addOutConnection(sc);
-			addStreamTracks(sc.pcOut, state.screenStream, screenMaxHeightWindowed);
+			addStreamTracks(sc.pcOut, state.screenStream, screenMaxHeightLow);
 			api.sendShareVideo(userId, { fromScreen: true });
 		}
 		if (state.cameraStream != null) {
@@ -79,14 +79,17 @@ const api = {
 		}
 
 		addInConnection(c, function () {
-			if (c.isScreen) {
-				c.video.addEventListener("dblclick", function () {
-					api.sendRequestScreenResolution(userId, {});
-				});
+			if (!c.isScreen) {
+				return;
 			}
+
+			c.video.addEventListener("dblclick", function () {
+				c.isFullscreen = !c.isFullscreen;
+				api.sendRequestScreenResolution(userId, { highResolution: c.isFullscreen });
+			});
 		});
 	},
-	onPeerRequestScreenResolution: function (userId, _eventData) {
+	onPeerRequestScreenResolution: function (userId, eventData) {
 		if (state.screenStream == null) {
 			return;
 		}
@@ -96,11 +99,9 @@ const api = {
 			return;
 		}
 
-		c.isFullscreen = !c.isFullscreen;
-
-		const maxHeight = c.isFullscreen ?
-			screenMaxHeightFullscreen :
-			screenMaxHeightWindowed;
+		const maxHeight = eventData.highResolution ?
+			screenMaxHeightHigh :
+			screenMaxHeightLow;
 
 		const senders = c.pcOut.getSenders();
 		for (let sender of senders) {
@@ -132,8 +133,8 @@ const api = {
 			await pc.setRemoteDescription(eventData.description);
 			if (eventData.fromScreen) {
 				const maxHeight = c.isFullscreen ?
-					screenMaxHeightFullscreen :
-					screenMaxHeightWindowed;
+					screenMaxHeightHigh :
+					screenMaxHeightLow;
 				addStreamTracks(pc, state.screenStream, maxHeight);
 			} else {
 				addStreamTracks(pc, state.cameraStream, cameraMaxHeight);
@@ -175,3 +176,15 @@ function setSenderParameters(sender, maxHeight) {
 	}
 	sender.setParameters(parameters).catch(function (_error) { });
 }
+
+document.addEventListener("visibilitychange", function () {
+	const isVisible = document.visibilityState === 'visible';
+	for (let k in state.screenConnections) {
+		const c = state.screenConnections[k];
+		if (!c.isFullscreen) {
+			continue;
+		}
+
+		api.sendRequestScreenResolution(c.targetUserId, { highResolution: isVisible });
+	}
+});
