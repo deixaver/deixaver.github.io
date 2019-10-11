@@ -12,11 +12,13 @@ function newVideoElement(stream) {
 			e.target.className = "fullscreen";
 		}
 	});
-	try {
-		video.play();
-	} catch { }
+	video.play().catch(function (_error) { });
 	updateGridLayout();
 	return video;
+}
+
+function deleteVideoElement(video) {
+	videoContainer.removeChild(video);
 }
 
 function updateGridLayout() {
@@ -58,31 +60,47 @@ function newConnection(targetUserId, isScreen) {
 	return c;
 }
 
-function addOutConnection(connection) {
-	connection.pcOut = createRtcConnection(connection.targetUserId, false, connection.isScreen);
+function addInConnection(connection, onTrack) {
+	if (connection.pcIn == null) {
+		connection.pcIn = createRtcConnection(connection.targetUserId, true, connection.isScreen);
+		connection.pcIn.ontrack = function (e) {
+			if (connection.video === null) {
+				connection.video = newVideoElement(e.streams[0]);
+				onTrack();
+			}
+		};
+	}
 }
 
-function addInConnection(connection, onTrack) {
-	connection.pcIn = createRtcConnection(connection.targetUserId, true, connection.isScreen);
-	connection.pcIn.ontrack = function (e) {
-		if (connection.video === null) {
-			connection.video = newVideoElement(e.streams[0]);
-			onTrack();
-		}
-	};
+function addOutConnection(connection) {
+	if (connection.pcOut == null) {
+		connection.pcOut = createRtcConnection(connection.targetUserId, false, connection.isScreen);
+	}
+}
+
+function removeInConnection(connection) {
+	if (connection.pcIn != null) {
+		connection.pcIn.close();
+		connection.pcIn = null;
+	}
+
+	if (connection.video != null) {
+		deleteVideoElement(connection.video);
+		connection.video = null;
+		updateGridLayout();
+	}
+}
+
+function removeOutConnection(connection) {
+	if (connection.pcOut != null) {
+		connection.pcOut.close();
+		connection.pcOut = null;
+	}
 }
 
 function deleteConnection(connection) {
-	if (connection.video != null) {
-		videoContainer.removeChild(connection.video);
-		updateGridLayout();
-	}
+	connection.isFullscreen = false;
 
-	if (connection.pcIn != null) {
-		connection.pcIn.close();
-	}
-
-	if (connection.pcOut != null) {
-		connection.pcOut.close();
-	}
+	removeInConnection(connection);
+	removeOutConnection(connection);
 }

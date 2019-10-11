@@ -1,9 +1,10 @@
 const client = new Photon.LoadBalancing.LoadBalancingClient(Photon.ConnectionProtocol.Wss, "8327ad7d-7bfc-440a-af7c-f8014fd196b5", version);
 
 const eventShareVideo = 1;
-const eventRequestScreenResolution = 2;
-const eventIceCandidate = 3;
-const eventDescription = 4;
+const eventStopVideo = 2;
+const eventRequestScreenResolution = 3;
+const eventIceCandidate = 4;
+const eventDescription = 5;
 
 client.onStateChange = function (state) {
 	if (client.isInLobby()) {
@@ -39,6 +40,9 @@ client.onEvent = function (code, data, actorNr) {
 		case eventShareVideo:
 			api.onPeerShareVideo(actorNr, JSON.parse(data));
 			break;
+		case eventStopVideo:
+			api.onPeerStopVideo(actorNr, JSON.parse(data));
+			break;
 		case eventRequestScreenResolution:
 			api.onPeerRequestScreenResolution(actorNr, JSON.parse(data));
 			break;
@@ -57,16 +61,15 @@ client.onEvent = function (code, data, actorNr) {
 	}
 }
 
-window.onload = async function () {
-	const useCamera =
-		window.location.search === "?cam" ||
-		window.location.hash === "#cam";
-	await api.shareScreen(useCamera);
-
-	client.connectToRegionMaster("SA");
-
+function online_init() {
+	api.sendShareVideoAll = function (eventData) {
+		all_rpc(eventShareVideo, eventData);
+	};
 	api.sendShareVideo = function (targetActorNr, eventData) {
 		targeted_rpc(eventShareVideo, eventData, targetActorNr);
+	};
+	api.sendStopVideoAll = function (eventData) {
+		all_rpc(eventStopVideo, eventData);
 	};
 	api.sendRequestScreenResolution = function (targetActorNr, eventData) {
 		targeted_rpc(eventRequestScreenResolution, eventData, targetActorNr);
@@ -77,6 +80,16 @@ window.onload = async function () {
 	api.sendDescription = function (targetActorNr, eventData) {
 		targeted_rpc(eventDescription, eventData, targetActorNr);
 	};
+
+	client.connectToRegionMaster("SA");
+}
+
+function all_rpc(eventId, eventData) {
+	client.raiseEvent(
+		eventId,
+		JSON.stringify(eventData),
+		//{ cache: Photon.LoadBalancing.Constants.EventCaching.AddToRoomCacheGlobal }
+	);
 }
 
 function targeted_rpc(eventId, eventData, targetActorNr) {
