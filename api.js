@@ -11,6 +11,7 @@ const state = {
 	cameraStream: null,
 	screenVideo: null,
 	cameraVideo: null,
+	waitingOnShareAccept: false,
 }
 
 const api = {
@@ -42,11 +43,13 @@ const api = {
 		if (sc != null) {
 			deleteConnection(sc);
 			state.screenConnections[userId] = null;
+			delete state.screenConnections[userId];
 		}
 		const cc = state.cameraConnections[userId];
 		if (cc != null) {
 			deleteConnection(cc);
 			state.cameraConnections[userId] = null;
+			delete state.cameraConnections[userId];
 		}
 	},
 	onPeerShareVideo: function (userId, eventData) {
@@ -101,7 +104,12 @@ const api = {
 			state.cameraConnections[userId];
 		if (c != null) {
 			const pc = eventData.fromIn ? c.pcOut : c.pcIn;
-			pc.addIceCandidate(eventData.candidate);
+			if (pc != null) {
+				try {
+					pc.addIceCandidate(eventData.candidate);
+				} catch {
+				}
+			}
 		}
 	},
 	onDescription: async function (userId, eventData) {
@@ -126,8 +134,11 @@ const api = {
 			} else {
 				addStreamTracks(pc, state.cameraStream, cameraMaxHeight);
 			}
-			await pc.setLocalDescription(await pc.createAnswer());
-			api.sendDescription(userId, { fromIn: true, fromScreen: c.isScreen, description: pc.localDescription });
+			try {
+				await pc.setLocalDescription(await pc.createAnswer());
+				api.sendDescription(userId, { fromIn: true, fromScreen: c.isScreen, description: pc.localDescription });
+			} catch {
+			}
 		} else if (eventData.description.type === "answer") {
 			await pc.setRemoteDescription(eventData.description);
 		} else {
@@ -180,6 +191,11 @@ function api_init() {
 	});
 
 	document.addEventListener('keydown', async function (event) {
+		if (state.waitingOnShareAccept) {
+			return;
+		}
+		state.waitingOnShareAccept = true;
+
 		// S
 		if (event.keyCode == 83) {
 			if (state.screenVideo != null) {
@@ -196,6 +212,8 @@ function api_init() {
 				await shareCamera();
 			}
 		}
+
+		state.waitingOnShareAccept = false;
 	});
 }
 
