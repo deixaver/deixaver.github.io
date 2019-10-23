@@ -24,7 +24,7 @@ function deleteVideoElement(video) {
 function updateGridLayout() {
 	const videoCount = videoContainer.childElementCount;
 	const columns = Math.max(Math.ceil(Math.sqrt(videoCount)), 1);
-	videoContainer.style = "grid-template-columns:" + "auto ".repeat(columns);
+	videoContainer.style = "grid-template-columns:" + "1fr ".repeat(columns);
 }
 
 function createRtcConnection(targetUserId, isIn, isScreen) {

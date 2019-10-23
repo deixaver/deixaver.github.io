@@ -50,14 +50,9 @@ input {
 video {
 	width: 100%;
 	height: 100%;
+	background-color: black;
 }
 
 .fullscreen {
 	position: absolute;
 }
-
-.elem {
-	width: 100%;
-	height: 100%;
-}
-
