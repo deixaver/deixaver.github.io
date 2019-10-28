@@ -44,7 +44,7 @@ input {
 	height: 100%;
 
 	display: grid;
-	grid-template-columns: auto;
+	grid-template-columns: 1fr;
 }
 
 video {
@@ -55,4 +55,5 @@ video {
 
 .fullscreen {
 	position: absolute;
+	z-index: 1;
 }
