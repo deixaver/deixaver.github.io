@@ -4,6 +4,8 @@ function newVideoElement(stream) {
 	const video = document.createElement("video");
 	videoContainer.appendChild(video);
 	video.autoplay = true;
+	video.playsInline = true;
+	video.muted = true;
 	video.srcObject = stream;
 	video.addEventListener("dblclick", function (e) {
 		if (e.target.className === "fullscreen") {
