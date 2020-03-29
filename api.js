@@ -255,6 +255,7 @@ function stopScreenShare() {
 		removeOutConnection(c);
 	}
 
+	updateGridLayout();
 	api.sendStopVideoAll({ fromScreen: true });
 }
 
@@ -296,5 +297,6 @@ function stopCameraShare() {
 		removeOutConnection(c);
 	}
 
+	updateGridLayout();
 	api.sendStopVideoAll({ fromScreen: false });
 }
