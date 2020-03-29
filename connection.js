@@ -6,6 +6,7 @@ function newVideoElement(stream) {
 	video.autoplay = true;
 	video.playsInline = true;
 	video.muted = true;
+	video.controls = true;
 	video.srcObject = stream;
 	video.addEventListener("dblclick", function (e) {
 		if (e.target.className === "fullscreen") {
@@ -15,6 +16,7 @@ function newVideoElement(stream) {
 		}
 	});
 	video.play().catch(function (_error) { });
+	video.controls = false;
 	updateGridLayout();
 	return video;
 }
@@ -32,7 +34,13 @@ function updateGridLayout() {
 function createRtcConnection(targetUserId, isIn, isScreen) {
 	//https://gist.github.com/sagivo/3a4b2f2c7ac6e1b5267c2f1f59ac6c6b
 	const pc = new RTCPeerConnection({
-		iceServers: [{ urls: "stun:stun.l.google.com:19302" }]
+		iceServers: [{
+			urls: [
+				"stun:stun1.l.google.com:19302",
+				"stun:stun2.l.google.com:19302",
+			],
+		}],
+		iceCandidatePoolSize: 10,
 	});
 
 	pc.onicecandidate = function (e) {
