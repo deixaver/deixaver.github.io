@@ -63,12 +63,14 @@ client.onEvent = function (code, data, actorNr) {
 
 function online_init() {
 	api.sendShareVideoAll = function (eventData) {
+		api.onPeerShareVideo(client.myActor().actorNr, eventData);
 		all_rpc(eventShareVideo, eventData);
 	};
 	api.sendShareVideo = function (targetActorNr, eventData) {
 		targeted_rpc(eventShareVideo, eventData, targetActorNr);
 	};
 	api.sendStopVideoAll = function (eventData) {
+		api.onPeerStopVideo(client.myActor().actorNr, eventData);
 		all_rpc(eventStopVideo, eventData);
 	};
 	api.sendRequestScreenResolution = function (targetActorNr, eventData) {
