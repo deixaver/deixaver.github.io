@@ -16,7 +16,7 @@ function newVideoElement(stream) {
 		}
 	});
 	video.play().catch(function (_error) { });
-	video.controls = false;
+	//video.controls = false;
 	updateGridLayout();
 	return video;
 }
