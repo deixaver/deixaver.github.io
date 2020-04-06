@@ -13,6 +13,8 @@ client.onStateChange = function (state) {
 
 	if (state == Photon.LoadBalancing.LoadBalancingClient.State.Joined) {
 		const localActorNr = client.myActor().actorNr;
+		api.onConnected(localActorNr);
+
 		for (let actor of client.actorsArray) {
 			if (actor.actorNr != localActorNr) {
 				api.onPeerJoined(actor.actorNr);
@@ -90,7 +92,6 @@ function all_rpc(eventId, eventData) {
 	client.raiseEvent(
 		eventId,
 		JSON.stringify(eventData),
-		//{ cache: Photon.LoadBalancing.Constants.EventCaching.AddToRoomCacheGlobal }
 	);
 }
 
@@ -99,6 +100,5 @@ function targeted_rpc(eventId, eventData, targetActorNr) {
 		eventId,
 		JSON.stringify(eventData),
 		{ targetActors: [targetActorNr] }
-		//{ cache: Photon.LoadBalancing.Constants.EventCaching.AddToRoomCacheGlobal }
 	);
 }

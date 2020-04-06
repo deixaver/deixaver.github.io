@@ -4,7 +4,10 @@ const screenMaxHeightLow = 120;
 const screenMaxHeightHigh = 960;
 const cameraMaxHeight = 120;
 
+const documentTitle = document.title;
+
 const state = {
+	peerCount: 0,
 	screenConnections: {},
 	cameraConnections: {},
 	screenStream: null,
@@ -15,6 +18,9 @@ const state = {
 }
 
 const api = {
+	onConnected: function (_userId) {
+		state.peerCount = 1;
+	},
 	onPeerJoined: function (userId) {
 		let sc = state.screenConnections[userId];
 		if (sc == null) {
@@ -37,6 +43,9 @@ const api = {
 			addStreamTracks(cc.pcOut, state.cameraStream, cameraMaxHeight);
 			api.sendShareVideo(userId, { fromScreen: false });
 		}
+
+		state.peerCount += 1;
+		updateTitle();
 	},
 	onPeerLeft: function (userId) {
 		const sc = state.screenConnections[userId];
@@ -51,6 +60,9 @@ const api = {
 			state.cameraConnections[userId] = null;
 			delete state.cameraConnections[userId];
 		}
+
+		state.peerCount -= 1;
+		updateTitle();
 	},
 	onPeerShareVideo: function (userId, eventData) {
 		const c = eventData.fromScreen ?
@@ -65,7 +77,7 @@ const api = {
 				return;
 			}
 
-			c.video.addEventListener("dblclick", function () {
+			c.video.addEventListener("dblclick", function (e) {
 				c.isFullscreen = !c.isFullscreen;
 				api.sendRequestScreenResolution(userId, { highResolution: c.isFullscreen });
 			});
@@ -299,4 +311,8 @@ function stopCameraShare() {
 
 	updateGridLayout();
 	api.sendStopVideoAll({ fromScreen: false });
+}
+
+function updateTitle() {
+	document.title = documentTitle + " (" + state.peerCount + ")";
 }
